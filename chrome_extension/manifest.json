@@ -31,6 +31,7 @@
         "https://bandcamp.com/tag/*"
       ],
       "js": [
+        "js/jquery/jquery.js",
         "src/inject/inject.js"
       ]
     }

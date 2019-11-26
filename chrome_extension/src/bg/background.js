@@ -24,6 +24,8 @@ chrome.extension.onMessage.addListener(
       })
     } else if (msgType == "addToPlaylist") {
       sendResponse("added!")
+    } else {
+      sendResponse("page is ready")
     }
 
     // Inform Chrome that we will make a delayed sendResponse

@@ -6,3 +6,4 @@ gem "pry-byebug"
 gem 'sinatra-cross_origin'
 gem 'rest-client'
 gem 'nokogiri'
+gem 'redis'

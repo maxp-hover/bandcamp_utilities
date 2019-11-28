@@ -48,7 +48,10 @@ def lookup_album(href:, album:, artist:)
     {
       tracks: tracks,
       total_seconds: total_seconds,
-      tags: tags
+      album: album,
+      artist: artist,
+      tags: tags,
+      href: href
     }
   end
 end

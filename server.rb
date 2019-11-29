@@ -6,6 +6,7 @@ require 'sinatra/cross_origin'
 require 'rest_client'
 require 'nokogiri'
 require 'redis'
+require 'colored'
 
 $redis = Redis.new(url: ENV["REDIS_URL"] || "redis://localhost:6379/2")
 
@@ -17,52 +18,74 @@ before do
   response.headers['Access-Control-Allow-Origin'] = '*'
 end
 
-def redis_get_or_set(key, &blk)
-  $redis.get(key)&.tap { |found_val| return JSON.parse(found_val) }
+def redis_key(artist:, album:)
+  key = { artist: artist, album: album }.to_json
+end
+
+def redis_set(key, &blk)
   val = blk.call
   $redis.set(key, val.to_json)
   val
 end
 
-def lookup_album(href:, album:, artist:)
-  return if href == "undefined"
-  key = { artist: artist, album: album }.to_json
-  redis_get_or_set(key) do
-    body = RestClient.get href
-    doc = Nokogiri.parse body
-    tags = doc.css("a.tag").map(&:text)
-    # album_name = doc.css("#name-section .trackTitle").text.strip
-    # artist_name = doc.css("#name-section [itemprop='byArtist']").text.strip
-    total_seconds = 0
-    tracks = doc.css(".track_list .track_row_view").map do |track|
-      name = track.css(".title a").text.strip
-      time = track.css(".title .time").text.strip
-      next if time.blank? # not a streamable track!
-      minutes, seconds = time.split(":").map(&:to_i)
-      total_seconds += (seconds + (minutes * 60))
+def redis_get_or_set(key, &blk)
+  $redis.get(key)&.tap do |found_val|
+    puts "CACHED".red
+    return JSON.parse(found_val)
+  end
+  redis_set(key, &blk)
+end
+
+def get_soundscrape_data(href)
+  data = JSON.parse(
+    `python soundscrape/soundscrape.py #{href}`
+  )
+  track_infos = data["trackinfo"].map do |track|
+    track
+  end
+  {
+    album: data["album_name"],
+    artist: data["artist"],
+    href: href,
+    tags: data["genre"].split(" "),
+    total_seconds: data["trackinfo"].sum do |track|
+      track["duration"]
+    end.to_i,
+    tracks: data["trackinfo"].map do |track|
       {
-        name: name,
-        time: time,
+        track_href: track["file"]["mp3-128"],
+        name: track['title']
       }
     end
-    {
-      tracks: tracks,
-      total_seconds: total_seconds,
-      album: album,
-      artist: artist,
-      tags: tags,
-      href: href
-    }
+  }
+end
+
+def lookup_album(href:, album: nil, artist: nil, skip_cache: false, **opts)
+  if skip_cache
+    data = get_soundscrape_data(href)
+    key = redis_key(artist: data[:artist], album: data[:album])
+    redis_set(key) { get_soundscrape_data(href) }
+  else
+    key = redis_key(artist: artist, album: album)
+    redis_get_set(key) { get_soundscrape_data(href) }
   end
 end
 
 get '/lookup_album' do
-  album_attr_keys = %w{href artist album}
-  album_attrs = params.slice *%w{href artist album}
-  unless album_attr_keys.all?(&album_attrs.method(:key?))
-    return "undefined".to_json
+  required_keys = if params[:skip_cache]
+    %w{href}
+  else
+    %w{href album artist}
   end
-  lookup_album(**album_attrs.to_h.symbolize_keys).to_json
+  valid_req = required_keys.all? do |key|
+    params.key?(key)
+  end
+  raise("INVALID REQ") unless valid_req
+  # unless valid_req
+  #   puts "INVALID REQUEST".red
+  #   return "undefined"
+  # end
+  lookup_album(**params.to_h.symbolize_keys).to_json
 end
 
 get '/clear_db' do

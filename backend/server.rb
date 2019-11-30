@@ -6,6 +6,7 @@ require 'sinatra/cross_origin'
 require 'rest_client'
 require 'nokogiri'
 require 'redis'
+require 'slim'
 require 'colored'
 
 $redis = Redis.new(url: ENV["REDIS_URL"] || "redis://localhost:6379/2")
@@ -29,6 +30,7 @@ def redis_set(key, &blk)
 end
 
 def redis_get_or_set(key, &blk)
+  # byebug
   $redis.get(key)&.tap do |found_val|
     puts "CACHED".red
     return JSON.parse(found_val)
@@ -61,14 +63,14 @@ def get_soundscrape_data(href)
 end
 
 def lookup_album(href:, album: nil, artist: nil, skip_cache: false, **opts)
-  if skip_cache
-    data = get_soundscrape_data(href)
-    key = redis_key(artist: data[:artist], album: data[:album])
-    redis_set(key) { get_soundscrape_data(href) }
-  else
+  # if skip_cache
+  #   data = get_soundscrape_data(href)
+  #   key = redis_key(artist: data[:artist], album: data[:album])
+  #   redis_set(key) { get_soundscrape_data(href) }
+  # else
     key = redis_key(artist: artist, album: album)
-    redis_get_set(key) { get_soundscrape_data(href) }
-  end
+    redis_get_or_set(key) { get_soundscrape_data(href) }
+  # endplaylist_tab_id
 end
 
 get '/lookup_album' do
@@ -86,6 +88,10 @@ get '/lookup_album' do
   #   return "undefined"
   # end
   lookup_album(**params.to_h.symbolize_keys).to_json
+end
+
+get '/player' do
+  slim :player
 end
 
 get '/clear_db' do

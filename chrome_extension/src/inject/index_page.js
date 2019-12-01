@@ -31,7 +31,7 @@ function addToPlaylist ({$presenterBox, responseObj}) {
       msgType: "addToPlaylist"
     },
     (apiResponse) => {
-      alert(apiResponse);
+      alert(`added ${responseObj.artist} - ${responseObj.album}`);
     }
   )
 }

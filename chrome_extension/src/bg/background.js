@@ -50,7 +50,7 @@ chrome.extension.onMessage.addListener(
       })
     } else if (msgType == "addToPlaylist") {
       addToPlaylist({params}).then(() => {
-        sendResponse("ok")
+        sendResponse("added")
     })
     } else {
       sendResponse("page is ready")

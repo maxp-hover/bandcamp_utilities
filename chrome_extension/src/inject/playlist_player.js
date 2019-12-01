@@ -15,9 +15,9 @@ function setGlobals () {
   window.AlbumData = []
   window.$extensionBox = $("#extension-box")
   window.$loading_box = $("#loading-box")
-  window.MusicPlayer = $("#message-box")
+  window.MusicPlayer = null
   window.$album_title = null
-  window.messageBox = null
+  window.$messageBox = $("#message-box")
   window.CurrentTrackIdx = 0
   window.$embed_box = $("#embed-box")
   window.$playBtn = null
@@ -48,6 +48,7 @@ function AddPlayBtn() {
   $extensionBox.append($btn)
   $btn.on("click", (e) => {
     window.UserHasInteracted = true;
+    MusicPlayer.$player.show()
     MusicPlayer.$player[0].play()
     $btn.remove()
   })
@@ -115,6 +116,7 @@ function addMusicPlayer ($extensionBox, AlbumData) {
   $source = $("<source>")
   $player.append($source)
   $extensionBox.append($player)
+  $player.hide()
   return { $player, $source }
 }
 
@@ -133,9 +135,20 @@ function getPlaylistItems () {
   })
 }
 
+function setPlaylistItems (val) {
+  return new Promise((resolve, reject) => {
+    obj = {}
+    obj[PLAYLIST_KEY] = val
+    chrome.storage.local.set(obj, (result) => {
+      resolve(result)
+    })
+  })
+}
+
 function gotoNextPlaylistItem () {
   getPlaylistItems().then((items) => {
     remaining = items.content.slice(1,)
+    setPlaylistItems({content: remaining})
     if (remaining.length > 0) {
       window.AlbumData = remaining[0]
       addMusicPlayerAlbumInfo()

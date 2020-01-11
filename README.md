@@ -19,7 +19,7 @@ No setup is necessary for the front end:
 1. Go to `about://extensions`
 2. Enable developer mode
 3. Press "load unpacked extension" (button is on the top left of the screen)
-4. Double click into the `chrome_extension/` directory and pres OK
+4. Double click into the `chrome_extension/` directory and press OK
 
 ### Todos
 

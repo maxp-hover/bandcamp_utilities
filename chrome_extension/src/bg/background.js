@@ -6,7 +6,7 @@
 
 
 // BACKEND_HOST = "https://bandcamp-utils-backend.herokuapp.com"
-BACKEND_HOST = "http://localhost:4567"
+BACKEND_HOST = "http://localhost:9292"
 PLAYLIST_KEY = "bandcamp_utils_playlist_items"
 
 function lookupAlbum ({params}) {

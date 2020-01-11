@@ -4,7 +4,7 @@
 
 PLAYLIST_KEY = "bandcamp_utils_playlist_items"
 $playlist_items = $("#playlist-items")
-BACKEND_HOST = "http://localhost:4567"
+BACKEND_HOST = "http://localhost:9292"
 CURRENT_PLAYLIST_ITEMS = {}
 window.PLAYER_TAB_ID = null
 

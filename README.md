@@ -29,6 +29,9 @@ No setup is necessary for the front end:
 - (X) Add accounts system
 - (X) Add backend for reviews system
 - (X) get redis deployment working with heroku
+- (X) auto add items to wishlist
+- (X) implement designs from Thyphex
+- (X) make it work with more bandcamp locations
 
 ### Backend - Deployment
 

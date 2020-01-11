@@ -17,7 +17,6 @@ function getPlaylistItems () {
 }
 
 function setPlaylistItems (val) {
-  debugger
   return new Promise((resolve, reject) => {
     obj = {}
     obj[PLAYLIST_KEY] = val
@@ -44,7 +43,6 @@ function setPlaylistItemsFromList () {
   newList = $.map(playlist_items, (item) => {
     return CURRENT_PLAYLIST_ITEMS[$(item).attr("album-artist")]
   })
-  debugger
   setPlaylistItems({content: newList})
 }
 

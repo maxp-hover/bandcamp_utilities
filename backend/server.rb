@@ -53,7 +53,9 @@ def get_soundscrape_data(href)
     total_seconds: data["trackinfo"].sum do |track|
       track["duration"]
     end.to_i,
-    tracks: data["trackinfo"].map do |track|
+    tracks: data["trackinfo"].reject do |track|
+      track["unreleased_track"]
+    end.map do |track|
       {
         track_href: track["file"]["mp3-128"],
         name: track['title']
@@ -63,14 +65,14 @@ def get_soundscrape_data(href)
 end
 
 def lookup_album(href:, album: nil, artist: nil, skip_cache: false, **opts)
-  # if skip_cache
-  #   data = get_soundscrape_data(href)
-  #   key = redis_key(artist: data[:artist], album: data[:album])
-  #   redis_set(key) { get_soundscrape_data(href) }
-  # else
+  if skip_cache
+    data = get_soundscrape_data(href)
+    key = redis_key(artist: data[:artist], album: data[:album])
+    redis_set(key) { get_soundscrape_data(href) }
+  else
     key = redis_key(artist: artist, album: album)
     redis_get_or_set(key) { get_soundscrape_data(href) }
-  # endplaylist_tab_id
+  end
 end
 
 get '/lookup_album' do
@@ -82,7 +84,10 @@ get '/lookup_album' do
   valid_req = required_keys.all? do |key|
     params.key?(key)
   end
-  raise("INVALID REQ") unless valid_req
+
+  byebug unless valid_req
+  # raise("INVALID REQ") unless valid_req
+
   # unless valid_req
   #   puts "INVALID REQUEST".red
   #   return "undefined"

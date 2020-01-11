@@ -3,32 +3,26 @@
 
 <head>
   <title></title>
-  <style type="text/css">
-  	#mainPopup {
-  		padding: 10px;
-  		height: 200px;
-  		width: 400px;
-  		font-family: Helvetica, Ubuntu, Arial, sans-serif;
-  	}
-  	h1 {
-  		font-size: 2em;
-  	}
-  </style>
+  <link rel="stylesheet" type="text/css" href="./browser_action.css">
 </head>
 
 <body>
 
   <div id="mainPopup">
 
-    <button id='clear-playlist'>Clear Playlist</button>
-    <button id='start-playlist'>Start Playlist</button>
+    <div id='buttons'>
+      <button id='clear-playlist'>Clear Playlist</button>
+      <button id='start-playlist'>Start Playlist</button>
+    </div>
 
-    <ol id='playlist-items'></ol>
+    <div id='playlist-items'></div>
 
   </div>
 
   <script type="text/javascript" src="../../js/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="../../js/jquery/jquery-ui.min.js"></script>
   <script type="text/javascript" src="browser_action.js"></script>
+  <script type="text/javascript"></script>
 
 </body>
 </html>

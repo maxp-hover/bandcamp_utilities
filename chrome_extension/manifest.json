@@ -34,6 +34,7 @@
         "js/jquery/jquery.js",
         "src/inject/index_page.js"
       ],
+      "all_frames": true,
       "css": [
         "src/inject/inject.css"
       ]
@@ -46,6 +47,7 @@
         "js/jquery/jquery.js",
         "src/inject/album_page.js"
       ],
+      "all_frames": true,
       "css": [
         "src/inject/inject.css"
       ]

@@ -25,24 +25,38 @@ function lookupAlbum ({$presenterBox, href, album, artist}) {
 }
 
 function addToPlaylist ({$presenterBox, responseObj}) {
+  $presenterBox.find("extension-album-info-box").addClass("in-user-wishlist")
   chrome.extension.sendMessage(
     {
       params: responseObj,
       msgType: "addToPlaylist"
     },
     (apiResponse) => {
-      alert(`added ${responseObj.artist} - ${responseObj.album}`);
+      if (apiResponse.error) {
+        alert(apiResponse.error)
+      } else {
+        alert(`added ${responseObj.artist} - ${responseObj.album}`);
+      }
     }
   )
 }
 
+function formatTime(seconds) {
+  totalHours = Math.floor(seconds / 3600);
+  totalMinutes = `${Math.floor((seconds % 3600) / 60)}`.padStart(2, 0);
+  totalSeconds = `${seconds % 60}`.padStart(2, 0);
+  if (totalHours > 0) {
+    return `${totalHours}:${totalMinutes}:${totalSeconds}`
+  } else {
+    return `${totalMinutes}:${totalSeconds}`
+  }
+}
+
 function showAlbumInfo ({$presenterBox, responseObj}) {
   inWishlist = $presenterBox.find(".wishlist-msg")[0].offsetParent === null
-  totalHours = Math.floor(responseObj.total_seconds / 3600);
-  totalMinutes = `${Math.floor((responseObj.total_seconds % 3600) / 60)}`.padStart(2, 0);
-  totalSeconds = `${responseObj.total_seconds % 60}`.padStart(2, 0);
+  formattedTime = formatTime(responseObj.total_seconds)
   $box = $(`<div></div>`)
-  $time = $(`<div class='time'>${totalHours}:${totalMinutes}:${totalSeconds}</div>`)
+  $time = $(`<div class='time'>${formattedTime}</div>`)
   $box.append($time)
   $playlistBtn = $(`<button class='addToPlaylistBtn'>Add</button>>`)
   $box.append($playlistBtn)

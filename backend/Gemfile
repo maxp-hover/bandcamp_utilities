@@ -9,3 +9,4 @@ gem 'nokogiri'
 gem 'redis'
 gem 'colored'
 gem 'slim'
+gem "rack"

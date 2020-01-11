@@ -1,0 +1,60 @@
+
+body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#buttons {
+  margin: 3px;
+  width: 100%
+}
+
+#buttons button {
+  margin: auto;
+}
+
+#mainPopup, #extension-box {
+  /*padding: 10px;*/
+  /*margin: 3px;*/
+  /*height: 200px;*/
+  /*width: 400px;*/
+/*  height: 800px;
+  width: 800px;*/
+  /*height: 100%;*/
+  /*width: 100%;*/
+  font-family: Helvetica, Ubuntu, Arial, sans-serif;
+  background-color: grey;
+  color: black;
+  overflow-x: scroll;
+  overflow-y: scroll;
+}
+h1 {
+  font-size: 2em;
+}
+#playlist-items {
+  list-style: none;
+}
+
+.playlist-item {
+  display: block;
+  border: 1px solid black;
+  margin: 1px;
+  font-size: 14px;
+  padding: 3px;
+  border-radius: 5px;
+  background-color: grey;
+  font-weight: bold
+}
+
+.playlist-item:hover{
+  cursor: move;
+}
+
+.tag {
+  display: inline-block;
+  border: 1px solid black;
+  margin: 2px;
+  padding: 1px;
+}

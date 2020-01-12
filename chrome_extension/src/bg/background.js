@@ -46,7 +46,6 @@ function addToPlaylist ({params}) {
           item.artist == params.artist
         )
       }).length > 0
-      debugger
       if (isDup) {
         reject("already in playlist")
       } else {

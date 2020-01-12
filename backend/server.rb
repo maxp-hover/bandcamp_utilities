@@ -40,7 +40,7 @@ end
 
 def get_soundscrape_data(href)
   data = JSON.parse(
-    `python soundscrape/soundscrape.py #{href}`
+    `python soundscrape/soundscrape_modified.py #{href}`
   )
   track_infos = data["trackinfo"].map do |track|
     track

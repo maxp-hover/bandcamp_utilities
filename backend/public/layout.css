@@ -1,4 +1,9 @@
 
+/*
+These styles apply to the "playlist player" page.
+That is the only HTML page served from the backend.
+*/
+
 body {
   padding: 0;
   margin: 0;
@@ -30,9 +35,11 @@ body {
   overflow-x: scroll;
   overflow-y: scroll;
 }
+
 h1 {
   font-size: 2em;
 }
+
 #playlist-items {
   list-style: none;
 }

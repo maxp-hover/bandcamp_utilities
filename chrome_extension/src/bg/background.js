@@ -1,13 +1,16 @@
-// if you checked "fancy-settings" in extensionizr.com, uncomment this lines
 
-// var settings = new Store("settings", {
-//     "sample_setting": "This is how you use Store.js to remember values"
-// });
-
+// =======================================================
+// Constants - must update BACKEND_HOST when deploying
+// TODO: find a way around this
+// =======================================================
 
 // BACKEND_HOST = "https://bandcamp-utils-backend.herokuapp.com"
 BACKEND_HOST = "http://localhost:9292"
 PLAYLIST_KEY = "bandcamp_utils_playlist_items"
+
+// =======================================================
+// Looks up an album's details from the backend
+// =======================================================
 
 function lookupAlbum ({params}) {
   var url = new URL(`${BACKEND_HOST}/lookup_album`)
@@ -18,6 +21,10 @@ function lookupAlbum ({params}) {
   return fetch(url.href).then(r => r.text())
 }
 
+// =======================================================
+// Looks up the current playlist items from local storage.
+// =======================================================
+
 function getPlaylistItems () {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get([PLAYLIST_KEY], (result) => {
@@ -25,6 +32,11 @@ function getPlaylistItems () {
     })
   })
 }
+
+// =======================================================
+// Sends a message to extension pages, instructing them
+// to reload the playlist because it has changed.
+// =======================================================
 
 function SendRefreshCmd() {
   chrome.storage.local.get(['playlist_data'], (data) => {
@@ -35,6 +47,10 @@ function SendRefreshCmd() {
     );
   })
 }
+
+// =======================================================
+// Adds an album to the playlist
+// =======================================================
 
 function addToPlaylist ({params}) {
 
@@ -61,7 +77,12 @@ function addToPlaylist ({params}) {
   })
 }
 
-//example of using a message handler from the inject scripts
+// =======================================================
+// Message listener - receives messages from extension pages
+// Messages can be of type:
+// "lookupAlbum" or "addToPlaylist", or "pageReady"
+// =======================================================
+
 chrome.extension.onMessage.addListener(
   function({params, msgType}, sender, sendResponse) {
 
@@ -79,6 +100,7 @@ chrome.extension.onMessage.addListener(
         sendResponse({error: "already in playlist"})
       })
     } else {
+      // TODO: change this to require "pageReady" msgType
       sendResponse("page is ready")
     }
 
@@ -88,6 +110,13 @@ chrome.extension.onMessage.addListener(
   }
 );
 
+// =======================================================
+// Listener to inject the playlist_player script
+// Checks the tabId of every page that's opened in the browser,
+// and executes the script if it matches the playlist_tab_id
+// in localstrage (this happens in browser_action.js)
+// =======================================================
+
 chrome.webNavigation.onCompleted.addListener(function(details) {
     chrome.storage.local.get(
       ['playlist_data'],
@@ -96,9 +125,7 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
         if (
           (details.tabId == playlist_data.playlist_tab_id) &&
           details.url == `${BACKEND_HOST}/player`
-          // new URL(details.url).host == new URL(playlist_data.playlist_host_url).host
         ) {
-          // debugger
           chrome.tabs.executeScript(
             details.tabId,
             {file: 'js/jquery/jquery.js'}
@@ -110,14 +137,12 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
         }
       }
     )
-    // chrome.tabs.executeScript(details.tabId, {
-    //     code: ' if (document.body.innerText.indexOf("Cat") !=-1) {' +
-    //           '     alert("Cat not found!");' +
-    //           ' }'
-    // });
+
 }, {
-    // url: [{
-    //     // Runs on example.com, example.net, but also example.foo.com
-    //     hostContains: '.example.'
-    // }],
+  // TODO: should probably add some host restrictions:
+
+  // url: [{
+  //     // Runs on example.com, example.net, but also example.foo.com
+  //     hostContains: '.example.'
+  // }],
 });

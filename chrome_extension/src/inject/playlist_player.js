@@ -1,4 +1,9 @@
 
+// =======================================================
+// Wait until the page is ready.
+// TODO: can this be a shared definition?
+// =======================================================
+
 function waitForPageReady () {
   return new Promise((resolve, reject) => {
     chrome.extension.sendMessage({}, function(response) {
@@ -11,6 +16,10 @@ function waitForPageReady () {
     })
   })
 }
+
+// =======================================================
+// Global variables
+// =======================================================
 
 function setGlobals () {
   window.AlbumData = []
@@ -31,6 +40,10 @@ function setGlobals () {
   window.time_elapsed_previous_songs = 0
   window.PLAYLIST_KEY = "bandcamp_utils_playlist_items"
 }
+
+// =======================================================
+// Initialization function
+// =======================================================
 
 function initPage () {
   $(()=>{
@@ -53,8 +66,12 @@ function initPage () {
   })
 }
 
+// =======================================================
 // Other scripts can tell the player to redraw the playlist
-// (if items were added or reordered)
+// (if items were added or reordered).
+// The message is received and processed here
+// =======================================================
+
 function addRedrawListener() {
   chrome.runtime.onMessage.addListener(
     function({params, msgType}, sender, sendResponse) {
@@ -64,6 +81,11 @@ function addRedrawListener() {
     }
   )
 }
+
+// =======================================================
+// Utility method for displaying a duration as a hour:minute:second string
+// TODO: can there be a shared definition for this?
+// =======================================================
 
 function formatTime(seconds) {
   totalHours = Math.floor(seconds / 3600);
@@ -75,6 +97,12 @@ function formatTime(seconds) {
     return `${totalMinutes}:${totalSeconds}`
   }
 }
+
+// =======================================================
+// Adds a little DOM component which tracks the elapsed
+// time of the current album. Does this by adding an
+// ontimeupdate listener to the audio player.
+// =======================================================
 
 function addTimeTracker() {
   MusicPlayer.$player[0].ontimeupdate = () => {
@@ -90,6 +118,11 @@ function addTimeTracker() {
   }
 }
 
+// =======================================================
+// Loads the current playlist from local storage.
+// TODO: use background.js?
+// =======================================================
+
 function getPlaylistItems () {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get([PLAYLIST_KEY], (result) => {
@@ -97,6 +130,11 @@ function getPlaylistItems () {
     })
   })
 }
+
+// =======================================================
+// Replaces the current playlist in local storage.
+// TODO: use background.js?
+// =======================================================
 
 function setPlaylistItems (val) {
   return new Promise((resolve, reject) => {
@@ -109,11 +147,16 @@ function setPlaylistItems (val) {
   })
 }
 
+// =======================================================
+// Reloads and redraws the playlist.
+// Called when the player page receives a refresh command.
+// =======================================================
+
 function LoadPlaylist () {
   $playlist_items.empty()
   getPlaylistItems().then((items) => {
 
-    // Caching them here for easy access, in case of jQuery sortable interaction
+    // Reset the global variable
     window.CURRENT_PLAYLIST_ITEMS = {}
     items.content.forEach((item) => {
       window.CURRENT_PLAYLIST_ITEMS[`${item.artist} - ${item.album}`] = item
@@ -161,9 +204,11 @@ function LoadPlaylist () {
     })
 
   })
-// });
 }
 
+// =======================================================
+// Adds a button to start playing the playlist.
+// =======================================================
 
 function AddPlayBtn() {
   var $btn = $("<button id='start'>").text("START")
@@ -172,11 +217,14 @@ function AddPlayBtn() {
     window.UserHasInteracted = true;
     MusicPlayer.$player.show()
     MusicPlayer.$player[0].play()
-    debugger
     $btn.remove()
   })
   return $btn
 }
+
+// =======================================================
+// Adds a button to skip the current album.
+// =======================================================
 
 function AddSkipBtn() {
   var $btn = $("<button id='skip'>").text("SKIP")
@@ -190,6 +238,15 @@ function AddSkipBtn() {
   })
   return $btn
 }
+
+// =======================================================
+// Plays a track.
+// Note that autoplay is typically disabled by the browser
+// and so we must wait for the user to press a "play" button.
+// Behind the scenes, this somehow alerts the browser
+// that the user has "interacted" with the page, so
+// subsequent .play calls will work.
+// =======================================================
 
 function PlayTrack(idx) {
   window.time_elapsed_previous_songs += time_elapsed_current_song
@@ -219,6 +276,14 @@ function PlayTrack(idx) {
   }
 }
 
+// =======================================================
+// Looks up info for an album from background.js
+// skip_cache: true is used here because we must get updated
+// audio urls - we are actually going to play the tracks, now.
+// Bandcamp cycles the urls so they won't work
+// after sitting in the cache for a while.
+// =======================================================
+
 function lookupAlbum ({href, artist, album}) {
   return new Promise((resolve, reject) => {
     chrome.extension.sendMessage(
@@ -238,6 +303,12 @@ function lookupAlbum ({href, artist, album}) {
   })
 }
 
+// =======================================================
+// Gets the first item from the playlist.
+// Note that items are not removed from the playlist
+// until they are done playing.
+// =======================================================
+
 function getAlbumData() {
   return new Promise((resolve, reject) => {
     getPlaylistItems().then((items) => {
@@ -250,6 +321,10 @@ function getAlbumData() {
     })
   })
 }
+
+// =======================================================
+// Shows a little text about the currently playing album.
+// =======================================================
 
 function addMusicPlayerAlbumInfo() {
   $album_title.text(`${AlbumData.artist} - ${AlbumData.album}`)
@@ -268,11 +343,21 @@ function addMusicPlayer ($extensionBox, AlbumData) {
   return { $player, $source }
 }
 
+// =======================================================
+// Adds an event handler on the audio player
+// so we can know when to go to the next track.
+// =======================================================
+
 function addMusicPlayerEventHandlers () {
   MusicPlayer.$player[0].onended = () => {
     PlayTrack(CurrentTrackIdx + 1)
   }
 }
+
+// =======================================================
+// Looks up the current playlist from local storage.
+// TODO: use background.js?
+// =======================================================
 
 function getPlaylistItems () {
   return new Promise((resolve, reject) => {
@@ -281,6 +366,14 @@ function getPlaylistItems () {
     })
   })
 }
+
+// =======================================================
+// Replaces the current playlist in localstorage.
+// In the context of the playlist player, this occurs
+// when the user skips / removes an album or when an album
+// finishes playing.
+// TODO: use background.js?
+// =======================================================
 
 function setPlaylistItems (val) {
   return new Promise((resolve, reject) => {
@@ -291,6 +384,11 @@ function setPlaylistItems (val) {
     })
   })
 }
+
+// =======================================================
+// Proceeds from one album to the next.
+// Replaces the iframe content to the next album's url.
+// =======================================================
 
 function gotoNextPlaylistItem () {
   window.time_elapsed_previous_songs = 0
@@ -321,6 +419,11 @@ function gotoNextPlaylistItem () {
   })
 }
 
+// =======================================================
+// Adds some styles
+// TODO: move this to CSS file?
+// =======================================================
+
 function styleExtensionBox() {
   $extensionBox.css({
     width: "100%",
@@ -330,5 +433,8 @@ function styleExtensionBox() {
   })
 }
 
+// =======================================================
+// Initialization
+// =======================================================
 
 waitForPageReady().then(initPage)

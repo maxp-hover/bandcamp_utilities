@@ -32,6 +32,7 @@ No setup is necessary for the front end:
 - (X) auto add items to wishlist
 - (X) implement designs from Thyphex
 - (X) make it work with more bandcamp locations
+- (X) Go through TODOS in source code
 
 ### Backend - Deployment
 

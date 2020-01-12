@@ -29,9 +29,11 @@ body {
   overflow-x: scroll;
   overflow-y: scroll;
 }
+
 h1 {
   font-size: 2em;
 }
+
 #playlist-items {
   list-style: none;
 }

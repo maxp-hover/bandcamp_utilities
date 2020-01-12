@@ -9,15 +9,26 @@ require 'redis'
 require 'slim'
 require 'colored'
 
-$redis = Redis.new(url: ENV["REDIS_URL"] || "redis://localhost:6379/2")
+# =======================================================
+# Redis connection - used to cache
+# =======================================================
 
-configure do
-  enable :cross_origin
-end
+$redis = Redis.new(url: ENV["REDIS_URL"] ||
+         "redis://localhost:6379/2")
 
+# =======================================================
+# We must enable CORS because we're hitting our backend
+# from the browser extension
+# =======================================================
+
+configure { enable :cross_origin }
 before do
   response.headers['Access-Control-Allow-Origin'] = '*'
 end
+
+# =======================================================
+# Some helper methods for redis caching
+# =======================================================
 
 def redis_key(artist:, album:)
   key = { artist: artist, album: album }.to_json
@@ -30,39 +41,53 @@ def redis_set(key, &blk)
 end
 
 def redis_get_or_set(key, &blk)
-  # byebug
   $redis.get(key)&.tap do |found_val|
-    puts "CACHED".red
     return JSON.parse(found_val)
   end
   redis_set(key, &blk)
 end
 
+# =======================================================
+# Method that uses soundscrape to look up an album's data.
+# TODO: remove injection vulnerability
+# =======================================================
+
 def get_soundscrape_data(href)
-  data = JSON.parse(
-    `python soundscrape/soundscrape_modified.py #{href}`
-  )
-  track_infos = data["trackinfo"].map do |track|
-    track
+  cmd = "python soundscrape/soundscrape_modified.py #{href}"
+
+  # Backticks run the command in shell:
+  data = JSON.parse(`#{cmd}`)
+
+  # The total duration of the album:
+  total_seconds = data["trackinfo"].sum do |track|
+    track["duration"]
+  end.to_i
+
+  # Audio URL and name for each playable track
+  track_infos = data["trackinfo"].reject do |track|
+    track["unreleased_track"]
+  end.map do |track|
+    {
+      track_href: track["file"]["mp3-128"],
+      name: track['title']
+    }
   end
-  {
-    album: data["album_name"],
-    artist: data["artist"],
-    href: href,
-    tags: data["genre"].split(" "),
-    total_seconds: data["trackinfo"].sum do |track|
-      track["duration"]
-    end.to_i,
-    tracks: data["trackinfo"].reject do |track|
-      track["unreleased_track"]
-    end.map do |track|
-      {
-        track_href: track["file"]["mp3-128"],
-        name: track['title']
-      }
-    end
+
+  return {
+    album:         data["album_name"],
+    artist:        data["artist"],
+    href:          href,
+    tags:          data["genre"].split(" "),
+    total_seconds: total_seconds,
+    tracks:        track_infos
   }
 end
+
+# =======================================================
+# Method called by the route handler - gets an album's info.
+# It will first check the cache before delegating to
+# get_soundscrape_data if needed
+# =======================================================
 
 def lookup_album(href:, album: nil, artist: nil, skip_cache: false, **opts)
   if skip_cache
@@ -75,30 +100,39 @@ def lookup_album(href:, album: nil, artist: nil, skip_cache: false, **opts)
   end
 end
 
+# =======================================================
+# Route handlers
+# =======================================================
+
+# Returns JSON data of the requested album
 get '/lookup_album' do
   required_keys = if params[:skip_cache]
     %w{href}
   else
     %w{href album artist}
   end
-  valid_req = required_keys.all? do |key|
+
+  missing_keys = required_keys.reject do |key|
     params.key?(key)
   end
 
-  byebug unless valid_req
-  # raise("INVALID REQ") unless valid_req
+  if missing_keys.any?
+    raise("INVALID REQ - MISSING KEYS #{missing_keys}")
+  end
 
-  # unless valid_req
-  #   puts "INVALID REQUEST".red
-  #   return "undefined"
-  # end
   lookup_album(**params.to_h.symbolize_keys).to_json
 end
 
+# Renders HTML/CSS for the playlist player
+# Javascript is not served here - rather, it's
+# injected onto the page by background.js
+# There was a reason this is necessary,
+# but I can't remember it right now.
 get '/player' do
   slim :player
 end
 
+# Used for developer only, to reset the cache
 get '/clear_db' do
   $redis.flushdb
   { keys: $redis.keys }.to_json

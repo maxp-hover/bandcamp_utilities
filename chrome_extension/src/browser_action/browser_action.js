@@ -1,12 +1,22 @@
-// document.getElementById('title').addEventListener('click', (e) => {
-//   debugger
-// });
+
+// =======================================================
+// Constants / Globals
+// Must update BACKEND_HOST when deploying
+// TODO: find a way around this
+// =======================================================
 
 PLAYLIST_KEY = "bandcamp_utils_playlist_items"
-$playlist_items = $("#playlist-items")
 BACKEND_HOST = "http://localhost:9292"
-CURRENT_PLAYLIST_ITEMS = {}
+
 window.PLAYER_TAB_ID = null
+window.CURRENT_PLAYLIST_ITEMS = {}
+
+$playlist_items = $("#playlist-items")
+
+// =======================================================
+// Gets the current playlist items from local storage
+// TODO: call the background.js method instead?
+// =======================================================
 
 function getPlaylistItems () {
   return new Promise((resolve, reject) => {
@@ -16,17 +26,26 @@ function getPlaylistItems () {
   })
 }
 
+// =======================================================
+// Replaces the playlist object in local storage.
+// Triggers SendRefreshCmd() to alert the player page.
+// =======================================================
+
 function setPlaylistItems (val) {
   return new Promise((resolve, reject) => {
     obj = {}
     obj[PLAYLIST_KEY] = val
     chrome.storage.local.set(obj, (result) => {
-      // Alert the player that the playlist has changed
       SendRefreshCmd()
       resolve(result)
     })
   })
 }
+
+// =======================================================
+// Sends a "RefreshPlaylist" command to background.js
+// This will get forwarded to the player page.
+// =======================================================
 
 function SendRefreshCmd() {
   chrome.storage.local.get(['playlist_data'], (data) => {
@@ -38,6 +57,13 @@ function SendRefreshCmd() {
   })
 }
 
+// =======================================================
+// Replaces the playlist object in local storage
+// according to the state in the DOM.
+// This gets triggered when a user reorders the playlist.
+// Sends the refresh command via setPlaylistIems
+// =======================================================
+
 function setPlaylistItemsFromList () {
   playlist_items = $(".playlist-item:not(.ui-sortable-placeholder)")
   newList = $.map(playlist_items, (item) => {
@@ -46,14 +72,19 @@ function setPlaylistItemsFromList () {
   setPlaylistItems({content: newList})
 }
 
+// =======================================================
+// Loads / reloads the playlist and draws it on the DOM.
+// Adds event listeners.
+// =======================================================
+
 function LoadPlaylist () {
   $playlist_items.empty()
   getPlaylistItems().then((items) => {
 
-    // Caching them here for easy access, in case of jQuery sortable interaction
+    // Replace the value of the global constant
     window.CURRENT_PLAYLIST_ITEMS = {}
     items.content.forEach((item) => {
-      window.CURRENT_PLAYLIST_ITEMS[`${item.artist} - ${item.album}`] = item
+      CURRENT_PLAYLIST_ITEMS[`${item.artist} - ${item.album}`] = item
     })
 
     // Draw the playlist items on the page
@@ -99,8 +130,12 @@ function LoadPlaylist () {
     })
 
   })
-// });
 }
+
+// =======================================================
+// Utility method for displaying a duration as a hour:minute:second string
+// TODO: can this be moved to some shared location?
+// =======================================================
 
 function formatTime(seconds) {
   totalHours = Math.floor(seconds / 3600);
@@ -112,6 +147,10 @@ function formatTime(seconds) {
     return `${totalMinutes}:${totalSeconds}`
   }
 }
+
+// =======================================================
+// Adds drag-n-drop to the playlist items list
+// =======================================================
 
 function addJquerySortable() {
   $(() => {
@@ -126,6 +165,10 @@ function addJquerySortable() {
   })
 }
 
+// =======================================================
+// Event listener for the 'clear playlist' button
+// =======================================================
+
 $('#clear-playlist').on('click', (e) => {
   obj = {}
   obj[PLAYLIST_KEY] = {}
@@ -134,10 +177,14 @@ $('#clear-playlist').on('click', (e) => {
   LoadPlaylist()
 });
 
+// =======================================================
+// Event listener for the 'start playlist' button
+// Launches the player window and sets playlist_tab_id in localstorage.
+// Javascript is injected by background.js
+// =======================================================
+
 $('#start-playlist').on('click', (e) => {
   if ($playlist_items.length > 0) {
-    // $firstItem = $playlist_items.find(".playlist-item").eq(0)
-    // url = $firstItem.text()
     chrome.windows.create(
       {
         'url':    `${BACKEND_HOST}/player`,
@@ -154,16 +201,12 @@ $('#start-playlist').on('click', (e) => {
           {
             playlist_data: {
               playlist_tab_id: tab.id
-              // playlist_host_url: url
             }
           },
-          (result) => {
-
-          }
+          (result) => {}
         )
 
-        // Dont need to do this here:
-
+        // Dont need to do this here, it is done in background.js:
         // chrome.tabs.executeScript(tab.id, {file: 'src/inject/playlist_player.js'});
       }
     );

@@ -9,6 +9,7 @@ GEM
       zeitwerk (~> 2.2)
     byebug (11.0.1)
     coderay (1.1.2)
+    colored (1.2)
     concurrent-ruby (1.1.5)
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
@@ -21,18 +22,20 @@ GEM
     mime-types (3.3)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2019.1009)
-    mini_portile2 (2.4.0)
+    mini_portile2 (2.5.1)
     minitest (5.13.0)
     mustermann (1.0.3)
     netrc (0.11.0)
-    nokogiri (1.10.5)
-      mini_portile2 (~> 2.4.0)
+    nokogiri (1.11.4)
+      mini_portile2 (~> 2.5.0)
+      racc (~> 1.4)
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
     pry-byebug (3.7.0)
       byebug (~> 11.0)
       pry (~> 0.10)
+    racc (1.5.2)
     rack (2.0.7)
     rack-protection (2.0.7)
       rack
@@ -48,6 +51,10 @@ GEM
       rack-protection (= 2.0.7)
       tilt (~> 2.0)
     sinatra-cross_origin (0.4.0)
+    slim (4.1.0)
+      temple (>= 0.7.6, < 0.9)
+      tilt (>= 2.0.6, < 2.1)
+    temple (0.8.2)
     thread_safe (0.3.6)
     tilt (2.0.10)
     tzinfo (1.2.5)
@@ -62,12 +69,15 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  colored
   nokogiri
   pry-byebug
+  rack
   redis
   rest-client
   sinatra
   sinatra-cross_origin
+  slim
 
 BUNDLED WITH
    2.0.2
